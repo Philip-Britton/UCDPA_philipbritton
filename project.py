@@ -31,5 +31,5 @@ print(drop_columns.shape)
 # To view if there is duplicates.
 drop_duplicates = forbes.drop_duplicates(subset=['Company'])
 print(drop_duplicates.shape[0])
-print(drop_duplicates)
+
 # The duplicate company was 'Merck' which is based in US and Germany.
