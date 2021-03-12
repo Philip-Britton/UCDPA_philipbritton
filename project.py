@@ -33,3 +33,24 @@ drop_duplicates = forbes.drop_duplicates(subset=['Company'])
 print(drop_duplicates.shape[0])
 
 # The duplicate company was 'Merck' which is based in US and Germany.
+
+country_based = forbes.sort_values("Country", ascending=True)
+
+
+# For Looping & iterrows
+
+
+
+# Adding Company Name length as a column using for looping & itterows
+for lab, row in forbes.iterrows():
+    forbes.loc[lab, "name_length"] = len(row["Company"])
+    print(forbes.head())
+
+# Merging DataFrames. To find which country has the most companies in the top2000.
+# Then finding out which country has the most per capita.
+
+# First need to find the amount of unique countries. To find which populations to match the merging dataframe.
+
+unique_countries = forbes["Country"].unique()
+print(unique_countries)
+print(forbes.nunique())
