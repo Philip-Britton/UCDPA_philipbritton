@@ -37,15 +37,6 @@ print(drop_duplicates.shape[0])
 country_based = forbes.sort_values("Country", ascending=True)
 
 
-# For Looping & iterrows
-
-
-
-# Adding Company Name length as a column using for looping & itterows
-for lab, row in forbes.iterrows():
-    forbes.loc[lab, "name_length"] = len(row["Company"])
-    print(forbes.head())
-
 # Merging DataFrames. To find which country has the most companies in the top2000.
 # Then finding out which country has the most per capita.
 
