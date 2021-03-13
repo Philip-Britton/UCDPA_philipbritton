@@ -2,6 +2,7 @@
 import pandas as pd
 import seaborn as sns
 import numpy as np
+import matplotlib.pyplot as plt
 
 # Importing CSV file into Pandas DataFrame
 forbes = pd.read_csv("Forbes Top2000 2017.csv")
@@ -45,3 +46,32 @@ country_based = forbes.sort_values("Country", ascending=True)
 unique_countries = forbes["Country"].unique()
 print(unique_countries)
 print(forbes.nunique())
+
+world_pop = pd.read_csv('countries of the world.csv')
+
+# Drop duplicates
+print(world_pop.isna().sum())
+drop_duplicates_of_world = world_pop.drop_duplicates(subset=['Country'])
+print(drop_duplicates.shape[0])
+
+# No Country and Population duplicates so can move onto the merging of dataframes.
+merged_worldpop_and_forbes = pd.merge(forbes,world_pop, left_on='Country', right_on='Country', how="outer")
+print(merged_worldpop_and_forbes['Population'])
+merged_worldpop_and_forbes.to_csv('merged_worldpop_and_forbes.csv')
+
+frequency = merged_worldpop_and_forbes["Country"].value_counts()
+#Unfinished merge ^
+
+# Numpy show
+# To show which company produces the best sales to profits turnover
+print(forbes["Profits"].isna().sum())
+print(forbes["Sales"].isna().sum())
+np_sales = np.array(forbes["Sales"])
+np_profits = np.array(forbes["Profits"])
+sales_to_profits = (np_profits / np_sales) *100
+
+merged_worldpop_and_forbes["sales_to_profits"] = (np.array(merged_worldpop_and_forbes["Sales"]) / np.array(merged_worldpop_and_forbes["Profits"])*100)
+print(merged_worldpop_and_forbes)
+
+
+merged_worldpop_and_forbes.groupby("Country")["sales_to_profits"].max()
