@@ -3,25 +3,53 @@ import pandas as pd
 import seaborn as sns
 import numpy as np
 import matplotlib.pyplot as plt
+import bokeh.io
+import bokeh.models
+import bokeh.palettes
+import bokeh.plotting
+from bokeh.io import curdoc
+from bokeh.layouts import column, row
+from bokeh.models import ColumnDataSource, TextInput
+from bokeh.plotting import figure
+from bokeh.layouts import widgetbox
+from bokeh.models import Slider
+from bokeh.io import output_file, show
+from bokeh.models import HoverTool
+from bokeh.transform import factor_cmap
+from bokeh.palettes import Category20c
+from bokeh.palettes import Spectral
+from bokeh.models import LinearInterpolator
 
 # Importing CSV file into Pandas DataFrame
 forbes = pd.read_csv("Forbes Top2000 2017.csv")
 print(forbes.head())
+
 
 # Dropping duplicates and missing values in DataFrame
 # Firstly find if there a missing values from each column.
 print(forbes.isna().sum())
 
 # Finding the % of how much of the column is NA.
-print((forbes["Industry"].isna().sum() / forbes.shape[0])*100)
-print((forbes["Sector"].isna().sum() / forbes.shape[0])*100)
+def my_func (a):
+    percentage = (a / forbes.shape[0])*100
+    return percentage
+
+# To find, in a percentage, how much of the columns were NA using my custom function.
+# First is the Sector column
+print(my_func(197))
+
+# Next is the Industry column
+print(my_func(491))
+
 
 # Dropping missing rows.
 drop_rows = forbes.dropna()
 print(drop_rows.shape)
 
-# Getting a % of how many would be left to use.
-print((drop_rows.shape[0] / forbes.shape[0])*100)
+# Using my custom function from earlier we will use it again here to find out much
+# of the rows are left after excluding those rows with NA from above.
+print(my_func(1508))
+
 # This might have to do with a lot of the largest companies being involved in several sectors and industries.
 # Therefore I don't think it is an error in the data.
 
@@ -48,6 +76,7 @@ print(unique_countries)
 print(forbes.nunique())
 
 world_pop = pd.read_csv('countries of the world.csv')
+world_pop['Country'] = world_pop['Country'].apply(lambda x: str(x).strip())
 
 # Drop duplicates
 print(world_pop.isna().sum())
@@ -55,23 +84,140 @@ drop_duplicates_of_world = world_pop.drop_duplicates(subset=['Country'])
 print(drop_duplicates.shape[0])
 
 # No Country and Population duplicates so can move onto the merging of dataframes.
-merged_worldpop_and_forbes = pd.merge(forbes,world_pop, left_on='Country', right_on='Country', how="outer")
-print(merged_worldpop_and_forbes['Population'])
+merged_worldpop_and_forbes = forbes.merge(world_pop, left_on='Country', right_on='Country', how="outer")
+print(merged_worldpop_and_forbes)
 merged_worldpop_and_forbes.to_csv('merged_worldpop_and_forbes.csv')
+pd.read_csv('merged_worldpop_and_forbes.csv', index_col=0)
 
-frequency = merged_worldpop_and_forbes["Country"].value_counts()
-#Unfinished merge ^
+
+# To find which country has the most per capita, we need to find how many and where the top 2000 companies are based.
+frequency = forbes["Country"].value_counts()
+print(frequency[0:61])
+
+import pandas as pd
+dict = {"Country":['China', 'United States', 'Japan', 'South Korea', 'Netherlands', 'Germany',
+                   'Hong Kong', 'France', 'Spain', 'Switzerland', 'Brazil', 'Russia', 'Canada',
+ 'U.K', 'Australia', 'Taiwan', 'Italy', 'India', 'Ireland',
+ 'Saudi Arabia', 'Belgium', 'Sweden', 'Thailand', 'Luxembourg', 'Qatar',
+ 'Denmark', 'Singapore', 'Norway', 'United Arab Emirates', 'Mexico',
+ 'Indonesia', 'Malaysia', 'South Africa', 'Austria', 'Israel', 'Portugal',
+ 'Finland', 'Turkey', 'Colombia', 'Chile', 'Poland', 'Bermuda', 'Kuwait', 'Peru',
+ 'Philippines', 'Czech Rep.', 'Venezuela', 'Argentina', 'Hungary',
+ 'Morocco', 'Jordan', 'Bahrain', 'Lebanon', 'Mongolia', 'Nigeria', 'Oman',
+ 'Greece', 'Vietnam', 'Egypt', 'Pakistan', 'Puerto Rico'],
+        'amount': [200, 564, 229, 64, 24, 51, 62, 59, 23, 46, 20, 27, 58, 91, 39, 46, 27, 58, 20, 17, 9, 26, 14,
+          5, 8, 12, 17, 9, 14, 15, 6, 14, 10, 8, 1, 5, 9, 10, 6, 7, 5, 9, 3, 2, 8, 1, 3, 3, 2, 1,
+          1, 2, 2, 1, 2, 1, 7, 4, 1, 1, 1],
+        "Population":[1313973713, 298444215, 127463611, 48846823, 16491461, 82422299, 6940432, 60876136, 40397842,
+                           7523934, 188078227, 142893540, 33098932, 60609153, 20264082, 23036087, 58133509, 1095351995,
+                           4062235, 27019731, 10379067, 9016596, 64631595, 474413, 885359, 5450661, 4492150,
+                           4610820, 2602713, 107449525, 245452739, 24385858, 44187637, 8192880, 6352117, 10605870,
+                           5231372, 70413958, 43593035, 16134219, 38536869, 65773, 2418393, 28302603, 89468677,
+                           10235455, 25730435, 39921833, 9981334, 33241259, 5906760, 698585, 3874050, 2832224,
+                           131859731, 3102229, 10688058, 84402966, 78887007, 165803560, 3927188]}
+
+
+data_dict = pd.DataFrame(dict)
+
+# To find which country has the best ratio of population to amount of top 2000 companies in
+# the country, we will be be creating a new column by a simple calculation and then finding the
+# lowest amount in that column.
+data_dict['capita_per_top2000'] = (data_dict['Population'] / data_dict['amount'])
+print(data_dict[data_dict.capita_per_top2000 == data_dict.capita_per_top2000.min()])
+
+# Bermuda has the most of the forbes top 2000 per person. With having one company per 7308 people there.
+
 
 # Numpy show
-# To show which company produces the best sales to profits turnover
-print(forbes["Profits"].isna().sum())
+# To show which company produces the best market value to sales
+forbes = pd.read_csv("Forbes Top2000 2017.csv")
+print(forbes["Market_Value"].isna().sum())
 print(forbes["Sales"].isna().sum())
 np_sales = np.array(forbes["Sales"])
-np_profits = np.array(forbes["Profits"])
-sales_to_profits = (np_profits / np_sales) *100
+np_mv = np.array(forbes["Market_Value"])
+forbes['sales_to_marketval'] = (np_mv / np_sales)
+print(forbes['Company'][forbes.sales_to_marketval == forbes.sales_to_marketval.max()])
+print(forbes['sales_to_marketval'][forbes.sales_to_marketval == forbes.sales_to_marketval.max()])
+# Results show that Porsche Automobile Holding produces the best sales to market value. With having 16100
+# times their sales. Problem here is there is a feeling that this is an outlier.
 
-merged_worldpop_and_forbes["sales_to_profits"] = (np.array(merged_worldpop_and_forbes["Sales"]) / np.array(merged_worldpop_and_forbes["Profits"])*100)
-print(merged_worldpop_and_forbes)
+
+# no.9 Seaborn and Matlplotlib
+#Assess how European countries performed
+fig, ax = plt.subplots(figsize=(13,7))
+Europe = data_dict.iloc[[4,5,7,8,9,11,13,16,18,20,21,23,25,27,33,34,35,36,37,40,45,48,56]]
+print(Europe)
+
+ax.bar(Europe['Country'], Europe["amount"], color='b', edgecolor='black')
+ax.set_xticklabels(Europe['Country'], rotation=70, fontsize=7)
+ax.set_xlabel("Country")
+ax.set_ylabel('frequency')
+ax.set_title("Number of Europe's top 2000 Companies")
+ax.tick_params(axis='x')
+ax.tick_params(axis='y', colors='red')
+plt.grid(color='#95a5a6', linestyle='--', linewidth=0.8, axis='y', alpha=0.4)
+
+plt.show()
+# U.K and Germany among some of the best performing, however the surprise would be Swizerland in this plot.
+
+fig, ax = plt.subplots(2,1, sharex=True, figsize=(13, 7))
+ax[0].plot(Europe["Country"], Europe["capita_per_top2000"])
+ax[1].plot(Europe["Country"], Europe["Population"])
+ax[0].set_ylabel("Company per capita", color='blue')
+ax[1].set_ylabel("Population", color='red')
+ax[1].set_xlabel("Country")
+ax[1].set_xticklabels(Europe['Country'], rotation=70, fontsize=7)
+ax[1].grid(color='#95a5a6', linestyle='--', linewidth=1, axis='y', alpha=0.5)
+ax[0].grid(color='#95a5a6', linestyle='--', linewidth=1, axis='y', alpha=0.5)
+plt.show()
+# To assess Europe's capita per one of the top 2000 company two plots made on the same x-axis. The higher the
+# population on the bottom graph but the lower the points on the upper means they would be performing the
+# best. *Comment on best performing Luxembourg and poor performing Turkey and Poland. I.e want to be low on the upper
+
+forbes["color"] = np.where(forbes["Sales"] > 20, "green", "grey")
+sns.scatterplot(data=forbes, x="Sales", y="Profits", hue="Sector")
+sns.relplot(data=forbes, x="Assets", y="Market_Value", kind='scatter')
+sns.set(color_codes=True)
+plt.show()
+
+#keep
+# Import HoverTool from bokeh.models
+
+#Create data for the plot
+df = pd.read_csv("Dropped Na Forbes Top2000 2017.csv")
+dataset =ColumnDataSource(data=df)
+
+# Create the scatter plot
+size_mapper=LinearInterpolator(
+    x=[df.Profits.min(), df.Profits.max()],
+    y=[0,50])
+df.loc[(df.Sector=='Information Technology')].head()
+x = ['Financials', 'Information Technology', 'Consumer Discretionary',
+ 'Telecommunication Services', 'Energy', 'Industrials', 'Health Care',
+ 'Consumer Staples', 'Materials', 'Utilities']
+for i in x:
+    inter=df.loc[(df.Sector == i)]
+
+colors = bokeh.palettes.brewer['Spectral'][11],
+index_cmap = factor_cmap('Sector', palette=colors[0],
+                         factors=sorted(df.Sector.unique()))
+plot = figure(plot_width=1000, plot_height=850, title = "Top 2000 Sectors", toolbar_location=None,
+          tools="hover", tooltips="@Company: (@Sales, @Market_Value, @Profits))")
+index_cmap = factor_cmap('Sector', palette=colors[0],
+                         factors=sorted(df.Sector.unique()))
+plot.scatter('Sales','Market_Value',source=df, fill_alpha=0.9, fill_color=index_cmap,
+             size={'field':'Profits','transform': size_mapper},legend='Sector')
+plot.xaxis.axis_label = 'Sales'
+plot.yaxis.axis_label = 'Market Value'
+plot.legend.location = "top_left"
+plot.legend.title_text_font_size = '20pt'
+plot.legend.click_policy = "hide"
+show(plot)
 
 
-merged_worldpop_and_forbes.groupby("Country")["sales_to_profits"].max()
+# Creating the select widget
+
+# Create a slider widget
+
+#keep
+
