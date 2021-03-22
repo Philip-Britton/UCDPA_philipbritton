@@ -10,7 +10,6 @@ from bokeh.plotting import figure, output_file
 from bokeh.io import show
 from bokeh.transform import factor_cmap
 from bokeh.models import LinearInterpolator
-from bokeh.io import export_png
 
 # Importing CSV file into Pandas DataFrame
 forbes = pd.read_csv("Forbes Top2000 2017.csv")
