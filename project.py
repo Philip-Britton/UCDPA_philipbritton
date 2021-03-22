@@ -3,22 +3,14 @@ import pandas as pd
 import seaborn as sns
 import numpy as np
 import matplotlib.pyplot as plt
-import bokeh.io
-import bokeh.models
 import bokeh.palettes
 import bokeh.plotting
-from bokeh.io import curdoc
-from bokeh.layouts import column, row
-from bokeh.models import ColumnDataSource, TextInput
-from bokeh.plotting import figure
-from bokeh.layouts import widgetbox
-from bokeh.models import Slider
-from bokeh.io import output_file, show
-from bokeh.models import HoverTool
+import bokeh.io
+from bokeh.plotting import figure, output_file
+from bokeh.io import show
 from bokeh.transform import factor_cmap
-from bokeh.palettes import Category20c
-from bokeh.palettes import Spectral
 from bokeh.models import LinearInterpolator
+from bokeh.io import export_png
 
 # Importing CSV file into Pandas DataFrame
 forbes = pd.read_csv("Forbes Top2000 2017.csv")
@@ -63,7 +55,12 @@ print(drop_duplicates.shape[0])
 
 # The duplicate company was 'Merck' which is based in US and Germany.
 
-country_based = forbes.sort_values("Country", ascending=True)
+# Adding Company Name length as a column using for looping & itterows
+
+for i, row in forbes.iloc[:21].iterrows():
+        print(f"Index: {i}")
+        print(f"{row['Company']}")
+
 
 
 # Merging DataFrames. To find which country has the most companies in the top2000.
@@ -85,7 +82,7 @@ print(drop_duplicates.shape[0])
 
 # No Country and Population duplicates so can move onto the merging of dataframes.
 merged_worldpop_and_forbes = forbes.merge(world_pop, left_on='Country', right_on='Country', how="outer")
-print(merged_worldpop_and_forbes)
+print(merged_worldpop_and_forbes.head())
 merged_worldpop_and_forbes.to_csv('merged_worldpop_and_forbes.csv')
 pd.read_csv('merged_worldpop_and_forbes.csv', index_col=0)
 
@@ -94,7 +91,6 @@ pd.read_csv('merged_worldpop_and_forbes.csv', index_col=0)
 frequency = forbes["Country"].value_counts()
 print(frequency[0:61])
 
-import pandas as pd
 dict = {"Country":['China', 'United States', 'Japan', 'South Korea', 'Netherlands', 'Germany',
                    'Hong Kong', 'France', 'Spain', 'Switzerland', 'Brazil', 'Russia', 'Canada',
  'U.K', 'Australia', 'Taiwan', 'Italy', 'India', 'Ireland',
@@ -119,9 +115,8 @@ dict = {"Country":['China', 'United States', 'Japan', 'South Korea', 'Netherland
 
 data_dict = pd.DataFrame(dict)
 
-# To find which country has the best ratio of population to amount of top 2000 companies in
-# the country, we will be be creating a new column by a simple calculation and then finding the
-# lowest amount in that column.
+# To find which country has the best ratio of population per top 2000 company in the country,
+# we will be be creating a new column by a simple calculation and then finding the lowest amount in that column.
 data_dict['capita_per_top2000'] = (data_dict['Population'] / data_dict['amount'])
 print(data_dict[data_dict.capita_per_top2000 == data_dict.capita_per_top2000.min()])
 
@@ -142,8 +137,8 @@ print(forbes['sales_to_marketval'][forbes.sales_to_marketval == forbes.sales_to_
 # times their sales. Problem here is there is a feeling that this is an outlier.
 
 
-# no.9 Seaborn and Matlplotlib
-#Assess how European countries performed
+# Seaborn and Matlplotlib
+# Assess how European countries performed
 fig, ax = plt.subplots(figsize=(13,7))
 Europe = data_dict.iloc[[4,5,7,8,9,11,13,16,18,20,21,23,25,27,33,34,35,36,37,40,45,48,56]]
 print(Europe)
@@ -156,7 +151,7 @@ ax.set_title("Number of Europe's top 2000 Companies")
 ax.tick_params(axis='x')
 ax.tick_params(axis='y', colors='red')
 plt.grid(color='#95a5a6', linestyle='--', linewidth=0.8, axis='y', alpha=0.4)
-
+plt.savefig('Figure_1.png', dpi=500)
 plt.show()
 # U.K and Germany among some of the best performing, however the surprise would be Swizerland in this plot.
 
@@ -169,55 +164,39 @@ ax[1].set_xlabel("Country")
 ax[1].set_xticklabels(Europe['Country'], rotation=70, fontsize=7)
 ax[1].grid(color='#95a5a6', linestyle='--', linewidth=1, axis='y', alpha=0.5)
 ax[0].grid(color='#95a5a6', linestyle='--', linewidth=1, axis='y', alpha=0.5)
+plt.savefig('Figure_2.png', dpi=500)
 plt.show()
 # To assess Europe's capita per one of the top 2000 company two plots made on the same x-axis. The higher the
-# population on the bottom graph but the lower the points on the upper means they would be performing the
-# best. *Comment on best performing Luxembourg and poor performing Turkey and Poland. I.e want to be low on the upper
+# population on the bottom graph but the lower the points on the upper means they would be performing the best.
 
-forbes["color"] = np.where(forbes["Sales"] > 20, "green", "grey")
-sns.scatterplot(data=forbes, x="Sales", y="Profits", hue="Sector")
-sns.relplot(data=forbes, x="Assets", y="Market_Value", kind='scatter')
+fig, ax = plt.subplots(figsize=(13, 7))
+Top100 = forbes[:101]
+sns.scatterplot(data=Top100, x="Sales", y="Profits", hue="Sector", size='Market_Value')
+plt.title('Top 100 of the Forbes top 2000 Sales and Profits')
 sns.set(color_codes=True)
+plt.savefig('Figure_3.png', dpi=500)
 plt.show()
 
-#keep
-# Import HoverTool from bokeh.models
 
-#Create data for the plot
-df = pd.read_csv("Dropped Na Forbes Top2000 2017.csv")
-dataset =ColumnDataSource(data=df)
 
-# Create the scatter plot
-size_mapper=LinearInterpolator(
-    x=[df.Profits.min(), df.Profits.max()],
-    y=[0,50])
-df.loc[(df.Sector=='Information Technology')].head()
-x = ['Financials', 'Information Technology', 'Consumer Discretionary',
- 'Telecommunication Services', 'Energy', 'Industrials', 'Health Care',
- 'Consumer Staples', 'Materials', 'Utilities']
-for i in x:
-    inter=df.loc[(df.Sector == i)]
-
+# Create the bokeh plot
+size_mapper = LinearInterpolator(
+    x=[Top100.Profits.min(), Top100.Profits.max()],
+    y=[0, 50])
 colors = bokeh.palettes.brewer['Spectral'][11],
+plot = figure(plot_width=1100, plot_height=700, title = "Top 100 Companies & Sectors", toolbar_location=None,
+          tools="hover", tooltips="@Company: (@Sales, @Market_Value, @Profits)")
 index_cmap = factor_cmap('Sector', palette=colors[0],
-                         factors=sorted(df.Sector.unique()))
-plot = figure(plot_width=1000, plot_height=850, title = "Top 2000 Sectors", toolbar_location=None,
-          tools="hover", tooltips="@Company: (@Sales, @Market_Value, @Profits))")
-index_cmap = factor_cmap('Sector', palette=colors[0],
-                         factors=sorted(df.Sector.unique()))
-plot.scatter('Sales','Market_Value',source=df, fill_alpha=0.9, fill_color=index_cmap,
+                         factors=sorted(Top100.Sector.unique()))
+plot.scatter('Sales','Market_Value',source=Top100, fill_alpha=0.9, fill_color=index_cmap,
              size={'field':'Profits','transform': size_mapper},legend='Sector')
 plot.xaxis.axis_label = 'Sales'
 plot.yaxis.axis_label = 'Market Value'
-plot.legend.location = "top_left"
-plot.legend.title_text_font_size = '20pt'
-plot.legend.click_policy = "hide"
+plot.legend.location = "top_right"
+plot.legend.title = "Sector"
+output_file("Figure_4.html")
+
 show(plot)
 
 
-# Creating the select widget
-
-# Create a slider widget
-
-#keep
-
+# GeoPandas plots in Spyder
