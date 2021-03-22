@@ -24,10 +24,6 @@ plt.show()
 
 
 # To focus in on an area of the graph. In this instance it will be Dublin
-import geopandas as gpd
-import seaborn as sns
-import matplotlib.pyplot as plt
-import pandas as pd
 
 counties = gpd.read_file('counties/counties.shp')
 print(counties.head())
